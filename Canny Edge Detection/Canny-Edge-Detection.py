@@ -18,12 +18,8 @@ import os
 #from lolviz import matrixviz
 
 os.chdir(os.path.join(os.path.dirname(__file__)))
-img = cv2.imread(r'driving.jpg', cv2.IMREAD_GRAYSCALE)
-
-def noise_reduction(img):
-    blurred = cv2.blur(img,(4,4))
-    return blurred
-
+#img = cv2.imread(r'driving.jpg', cv2.IMREAD_GRAYSCALE)
+img = cv2.imread(r'Capture.png', cv2.IMREAD_GRAYSCALE)
 
 # TODO - rework
 def plot_step(img_a, img_b, title_a, title_b):
@@ -129,7 +125,8 @@ max_img = non_max_suppression(scaled_img, theta)
 
 # plt.quiver(x, y, u, v)
 
-def threshold(img, lowThresholdRatio=0.03, highThresholdRatio=.1, weak=25, strong=255):
+def threshold(img, lowThresholdRatio=0.07, highThresholdRatio=.25, weak=125, strong=255):
+    max = img.max()
     highThreshold = img.max() * highThresholdRatio
     lowThreshold = highThreshold * lowThresholdRatio
     M,N = img.shape
@@ -144,18 +141,62 @@ def threshold(img, lowThresholdRatio=0.03, highThresholdRatio=.1, weak=25, stron
           Z[i,j] = strong
         # find indices where img is above lowThreshold and below highThreshold
         elif (img[i,j] >= lowThreshold) and (img[i,j] < highThreshold):
+          imVal = img[i,j]
           Z[i,j] = weak
         else:
           Z[i,j] = 0
-    print(Z)
 
     return Z
 
 thresholded_img = threshold(max_img)
 
-#plot_step(max_img, thresholded_img, 'Non-Max Suppressed Image', 'Thresholded Image')
+plot_step(max_img, thresholded_img, 'Non-Max Suppressed Image', 'Thresholded Image')
 
-def hysteresis(img, weak=25, strong=255):
+# Hysteresis - Recursive DFS 
+def pixelSearch(img, Z, neighbors, weak, strong):
+    M,N = Z.shape
+    for n in neighbors:
+        Z[n[0],n[1]] = strong
+        nextNeighbors = np.array([[n[0]+1,n[1]],[n[0]+1,n[1]+1],[n[0],n[1]+1],[n[0]-1,n[1]+1],
+                                  [n[0]-1,n[1]],[n[0]-1,n[1]-1],[n[0],n[1]-1],[n[0]+1,n[1]-1]])
+        
+        # collect weak neighbors
+        dfsN = []
+        for n in nextNeighbors:
+            if n[0] != M and n[1] != N:
+              if img[n[0],n[1]] == weak and Z[n[0],n[1]] != strong:
+                dfsN.append(n)
+        
+        if len(dfsN) > 0:
+          pixelSearch(img, Z, dfsN, weak, strong)
+
+def hysteresis(img, weak=125, strong=255):
+    M,N = img.shape
+
+    # create empty image of zeros to store threshold values
+    Z = np.zeros([M, N])
+
+    for i in range(1, M-1):
+      for j in range(1, N-1):
+        pixel = img[i,j]
+
+        if (pixel == strong):
+          Z[i,j] = strong
+          neighbors = np.array([[i+1,j],[i+1,j+1],[i,j+1],[i-1,j+1],
+                                [i-1,j],[i-1,j-1],[i,j-1],[i+1,j-1]])
+          
+          # collect weak neighbors
+          dfsN = []
+          for n in neighbors:
+             if img[n[0],n[1]] == weak:
+                dfsN.append(n)
+
+          pixelSearch(img, Z, dfsN, weak, strong)
+
+    return Z
+
+# brute force hysteresis, unused. 
+def brute_hysteresis(img, weak=25, strong=255):
     M,N = img.shape
 
     # create empty image of zeros to store threshold values
@@ -185,5 +226,5 @@ minVal = 75
 maxVal = 100
 
 edges = cv2.Canny(img, minVal, maxVal)
-plot_step(img, hysteresis_img, 'Original Image', 'Final Image')
+#plot_step(img, hysteresis_img, 'Original Image', 'Final Image')
 plot_step(hysteresis_img, edges, 'Final Image', 'Edge Detection with OpenCV')

@@ -4,7 +4,7 @@ Nikhik Sawane & Jay Warren
 
 Collaborators: Allie Everett
 
-Some code reused from Jay's CSCI 5722 Quiz 3 - Canny Edge Detection
+Some code reused from CSCI 5722 Quiz 3 - Canny Edge Detection
 '''
 
 import numpy as np
@@ -18,11 +18,8 @@ import os
 #from lolviz import matrixviz
 
 os.chdir(os.path.join(os.path.dirname(__file__)))
-
-print(r'driving.jpg' in os.listdir("."))
 img = cv2.imread(r'driving.jpg', cv2.IMREAD_GRAYSCALE)
 
-# Use a Box Filter to blur the image
 def noise_reduction(img):
     blurred = cv2.blur(img,(4,4))
     return blurred
@@ -69,7 +66,7 @@ def noise_reduction(img):
 noise_reduced_img = noise_reduction(img)
 
 # TODO - plotting?
-plot_step(img, noise_reduced_img, 'Original Image', 'Noise-Reduced Image')
+# plot_step(img, noise_reduced_img, 'Original Image', 'Noise-Reduced Image')
 
 def scale(x):
     normX = ((x - np.min(x))/(np.max(x)-np.min(x))) * 255
@@ -78,8 +75,8 @@ def scale(x):
 gradient_x, gradient_y = gradient(noise_reduced_img)
 scaled_img = scale(np.hypot(gradient_x, gradient_y))
 theta = np.arctan2(gradient_y, gradient_x)
-plot_step(gradient_x, gradient_y, 'Gradient X', 'Gradient Y')
-plot_step(noise_reduced_img, scaled_img, 'Noise-Reduced Image', 'Gradient Image')
+# plot_step(gradient_x, gradient_y, 'Gradient X', 'Gradient Y')
+# plot_step(noise_reduced_img, scaled_img, 'Noise-Reduced Image', 'Gradient Image')
 
 def non_max_suppression(G, theta):
     M, N = G.shape
@@ -119,7 +116,7 @@ def non_max_suppression(G, theta):
 
 max_img = non_max_suppression(scaled_img, theta) 
 
-plot_step(scaled_img, max_img, 'Gradient Image', 'Non-Max Suppressed Image')
+#plot_step(scaled_img, max_img, 'Gradient Image', 'Non-Max Suppressed Image')
 
 # plot_step(scaled_img[200:230,10:40], max_img[200:230,10:40], 'Gradient Image', 'Non-Max Suppressed Image')
 
@@ -156,7 +153,7 @@ def threshold(img, lowThresholdRatio=0.03, highThresholdRatio=.1, weak=25, stron
 
 thresholded_img = threshold(max_img)
 
-plot_step(max_img, thresholded_img, 'Non-Max Suppressed Image', 'Thresholded Image')
+#plot_step(max_img, thresholded_img, 'Non-Max Suppressed Image', 'Thresholded Image')
 
 def hysteresis(img, weak=25, strong=255):
     M,N = img.shape
@@ -182,10 +179,11 @@ def hysteresis(img, weak=25, strong=255):
 
 hysteresis_img = hysteresis(thresholded_img)
 
-plot_step(thresholded_img, hysteresis_img, 'Thresholded Image', 'Final Image')
+#plot_step(thresholded_img, hysteresis_img, 'Thresholded Image', 'Final Image')
 
 minVal = 75
 maxVal = 100
 
 edges = cv2.Canny(img, minVal, maxVal)
-plot_step(img, edges, 'Original Image', 'Edge Detection with OpenCV')
+plot_step(img, hysteresis_img, 'Original Image', 'Final Image')
+plot_step(hysteresis_img, edges, 'Final Image', 'Edge Detection with OpenCV')

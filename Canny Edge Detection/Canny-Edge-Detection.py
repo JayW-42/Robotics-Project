@@ -9,6 +9,7 @@ Some code reused from CSCI 5722 Quiz 3 - Canny Edge Detection
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
+from scipy import signal
 from numpy.linalg import svd, inv
 import os
 
@@ -27,11 +28,11 @@ An expanded and slightly modified plot_step()
 '''
 def displayResults(imgI, imgF, imgOCV):
     plt.subplot(131),plt.imshow(imgI)
-    plt.title("Initial Image"), plt.xticks([]), plt.yticks([])
+    plt.title("a) Test Image",y=-.10), plt.xticks([]), plt.yticks([])
     plt.subplot(132),plt.imshow(imgF, cmap = 'gray')
-    plt.title("Final Image"), plt.xticks([]), plt.yticks([])
+    plt.title("b) Implementation",y=-.10), plt.xticks([]), plt.yticks([])
     plt.subplot(133),plt.imshow(imgOCV, cmap = 'gray')
-    plt.title("OpenCV"), plt.xticks([]), plt.yticks([])
+    plt.title("c) cv2.canny()",y=-.10), plt.xticks([]), plt.yticks([])
     plt.show()
 
 '''
@@ -88,8 +89,8 @@ Input   -   Grayscale image
 Output  -   Blurred image
 '''
 def noise_reduction(img):
-    # apply Gaussian Blur (3x3 kernel size)
-    blurred = cv2.GaussianBlur(img,(3,3),0)
+    # apply Gaussian Blur
+    blurred = cv2.GaussianBlur(img,(5,5),0)
     return blurred
 
 '''
@@ -108,8 +109,8 @@ def gradient(img):
                        [1, 2, 1]])
 
     # Convolve to calculate Gradient
-    gradient_x = cv2.filter2D(img, ddepth =-1, kernel=sobelx)
-    gradient_y = cv2.filter2D(img, ddepth =-1, kernel=sobely)
+    gradient_x = signal.convolve2d(img, sobelx, mode='same')
+    gradient_y = signal.convolve2d(img, sobely, mode='same')
 
     return gradient_x, gradient_y
 
@@ -139,26 +140,29 @@ def non_max_suppression(G, theta):
     # loop through all the image pixels and determine if the current pixel is a local maximum or not
     for i in range(M-1):
       for j in range(N-1):
+        a = angle[i,j]
+        pix = G[i,j]
+
         # collect adjacent pixels, based on gradient angle
 
-        # right-left
-        if (angle[i,j] < 36):
+        # left-right
+        if (angle[i,j] <= 22.5):
           n1 = G[i,j-1]
           n2 = G[i,j+1]
-        # upper right, lower left diagonal 
-        elif ( 36 <= angle[i,j] < 72):
-          n1 = G[i-1,j+1]
-          n2 = G[i+1,j-1]
-        # up-down
-        elif (72 < angle[i,j] <= 108):
-          n1 = G[i-1,j]
-          n2 = G[i+1,j]
-        # lower right, upper left diagonal 
-        elif (108 < angle[i,j] <= 144):
+        # lower right, upper left diagonal
+        elif (22.5 < angle[i,j] <= 67.5):
           n1 = G[i-1,j-1]
           n2 = G[i+1,j+1]
+        # up-down
+        elif (67.5 < angle[i,j] <= 112.5):
+          n1 = G[i-1,j]
+          n2 = G[i+1,j]
+        # upper right, lower left diagonal
+        elif (112.5 < angle[i,j] <= 157.5):
+          n1 = G[i+1,j-1]
+          n2 = G[i-1,j+1]
         # left-right
-        elif (144 < angle[i,j] <= 180):
+        elif (157.5 < angle[i,j] <= 180):
           n1 = G[i,j-1]
           n2 = G[i,j+1]
 
@@ -180,7 +184,7 @@ Input   -   Non-max suppressed image
 Output  -   Thresholded image
 Low & High ratios determined through trial and error. 
 '''
-def threshold(img, lowThresholdRatio=0.1, highThresholdRatio=.25, weak=125, strong=255):
+def threshold(img, lowThresholdRatio=0.03, highThresholdRatio=.09, weak=125, strong=255):
     # calc threshold values based on dictated ratios
     highThreshold = img.max() * highThresholdRatio
     lowThreshold = highThreshold * lowThresholdRatio
@@ -270,9 +274,8 @@ theta = np.arctan2(gradient_y, gradient_x)
 max_img = non_max_suppression(scaled_img, theta) 
 thresholded_img = threshold(max_img)
 hysteresis_img = hysteresis(thresholded_img)
-minVal = 75
-maxVal = 100
+minVal = 60
+maxVal = minVal*3
 edges = cv2.Canny(img, minVal, maxVal)
-
 
 displayResults(colorImg, hysteresis_img, edges)

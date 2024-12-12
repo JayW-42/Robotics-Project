@@ -28,11 +28,11 @@ An expanded and slightly modified plot_step()
 '''
 def displayResults(imgI, imgF, imgOCV):
     plt.subplot(131),plt.imshow(imgI)
-    plt.title("a) Test Image",y=-.10), plt.xticks([]), plt.yticks([])
+    plt.title("A) Test Image",y=-.25), plt.xticks([]), plt.yticks([])
     plt.subplot(132),plt.imshow(imgF, cmap = 'gray')
-    plt.title("b) Implementation",y=-.10), plt.xticks([]), plt.yticks([])
+    plt.title("B) Implementation",y=-.25), plt.xticks([]), plt.yticks([])
     plt.subplot(133),plt.imshow(imgOCV, cmap = 'gray')
-    plt.title("c) cv2.canny()",y=-.10), plt.xticks([]), plt.yticks([])
+    plt.title("C) cv2.canny()",y=-.25), plt.xticks([]), plt.yticks([])
     plt.show()
 
 '''
